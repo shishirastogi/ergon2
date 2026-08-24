@@ -51,6 +51,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Local-only docs (never push)
+MAKING_OF.md
+
 # Android build artifacts
 android/.gradle/
 android/app/build/
