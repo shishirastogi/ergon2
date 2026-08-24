@@ -1,0 +1,196 @@
+// Ergon — Prisma schema
+// Base: ergon-database.md. Extended minimally where the frontend API contract
+// requires extra persisted fields. Every deviation from ergon-database.md is
+// listed in server/SCHEMA_DEVIATIONS.md and must be kept in sync with that doc.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Used by migrations against cloud providers whose main URL goes through
+  // a connection pooler (e.g. Neon pooled endpoint). Falls back cleanly.
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String
+  name       String?
+  studioName String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  clients    Client[]
+  studios    Studio[]
+
+  @@map("users")
+}
+
+// Studio profile(s) owned by a user — used on quotes/invoices as the issuer.
+// A user may keep up to 5 (enforced in the service layer).
+model Studio {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  tagline   String?
+  email     String?
+  phone     String?
+  website   String?
+  address   String?
+  logoUrl   String?
+  currency  String?  @db.VarChar(3) // ISO-4217 code, e.g. INR
+  taxId     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("studios")
+}
+
+model Client {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  status    ClientStatus @default(LEAD)
+  notes     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  projects  Project[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("clients")
+}
+
+enum ClientStatus {
+  LEAD
+  ACTIVE
+  PAST
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  clientId     String
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title        String
+  status       ProjectStatus @default(LEAD)
+  // NOTE: exposed to the API as `stage` (frontend naming); DB column stays `status`
+  // per ergon-database.md.
+  quotedAmount Decimal?      @db.Decimal(12, 2)
+  hoursLogged  Decimal       @default(0) @db.Decimal(8, 2)
+  notes        String?
+  startDate    DateTime?
+  deadline     DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  quotes       Quote[]
+  invoices     Invoice[]
+
+  @@index([clientId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  LEAD
+  QUOTE_SENT
+  IN_PROGRESS
+  REVISIONS
+  DELIVERED
+  PAID
+}
+
+model Quote {
+  id          String       @id @default(cuid())
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // Denormalized for cheap list reads; always derived from project.clientId
+  // in the service layer — never trusted from the request body.
+  clientId    String
+  quoteNumber String       @unique
+  taxRate     Decimal      @default(0) @db.Decimal(6, 4) // fraction, e.g. 0.18 = 18%
+  subtotal    Decimal      @default(0) @db.Decimal(12, 2)
+  taxAmount   Decimal      @default(0) @db.Decimal(12, 2)
+  total       Decimal      @default(0) @db.Decimal(12, 2)
+  status      QuoteStatus  @default(DRAFT)
+  notes       String?
+  validUntil  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lineItems   LineItem[]
+  invoice     Invoice?
+
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  projectId     String
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quoteId       String?       @unique
+  quote         Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  clientId      String
+  invoiceNumber String        @unique
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime?
+  subtotal      Decimal       @default(0) @db.Decimal(12, 2)
+  taxRate       Decimal       @default(0) @db.Decimal(6, 4)
+  taxAmount     Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @default(0) @db.Decimal(12, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(12, 2)
+  status        InvoiceStatus @default(UNPAID)
+  paidDate      DateTime?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  lineItems     LineItem[]
+
+  @@index([projectId])
+  @@index([clientId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+model LineItem {
+  id          String   @id @default(cuid())
+  quoteId     String?
+  quote       Quote?   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  invoiceId   String?
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  position    Int      @default(0)
+
+  @@index([quoteId])
+  @@index([invoiceId])
+  @@map("line_items")
+}

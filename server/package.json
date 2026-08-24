@@ -1,0 +1,39 @@
+{
+    "name":  "ergon-server",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "description":  "Ergon backend API â€” client/quote/invoice/profitability management for a freelance studio",
+    "main":  "src/functions.js",
+    "engines":  {
+                    "node":  "\u003e=18",
+                    "npm":  "\u003e=9"
+                },
+    "scripts":  {
+                    "dev":  "nodemon src/index.js",
+                    "start":  "node src/index.js",
+                    "db:migrate":  "prisma migrate dev",
+                    "db:deploy":  "prisma migrate deploy",
+                    "db:seed":  "prisma db seed",
+                    "db:studio":  "prisma studio",
+                    "postinstall":  "prisma generate"
+                },
+    "prisma":  {
+                   "seed":  "node prisma/seed.js"
+               },
+    "dependencies":  {
+                         "@prisma/client":  "^6.5.0",
+                         "bcryptjs":  "^3.0.2",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.4.7",
+                         "express":  "^4.21.2",
+                         "firebase-functions":  "^7.3.2",
+                         "jose":  "^6.2.10",
+                         "jsonwebtoken":  "^9.0.2",
+                         "pdf-lib":  "^1.17.1",
+                         "prisma":  "^6.5.0"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.1.9"
+                        }
+}

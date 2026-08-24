@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+dev.env
+dev.env.*
+*.env
+!.env.template
+
+# API keys / credentials / certificates
+serviceAccountKey*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+keystore.properties
+oauth-tokens.json
+.superpassword
+credentials.json
+
+# Firebase local artifacts
+.firebase/
+firebase-debug.log
+*-debug.log
+
+# Local Postgres install & data
+.pgsql/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/app/*.keystore
+android/*.keystore

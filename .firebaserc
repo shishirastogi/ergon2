@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "shishirexe-website"
+  },
+  "targets": {
+    "shishirexe-website": {
+      "hosting": {
+        "subdomain-target": [
+          "ergonone"
+        ]
+      }
+    }
+  }
+}

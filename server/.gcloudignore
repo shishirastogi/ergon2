@@ -1,0 +1,15 @@
+# Google Cloud Functions deploy exclusions ??? keeps private/dev files OUT of
+# every upload bundle. Secrets live ONLY in Google Secret Manager.
+.env
+.env.*
+*.log
+server.err.log
+server.log
+scripts/
+.pgsql/
+node_modules/
+prisma/migrations/
+conn-test.mjs
+.git/
+firebase-debug.log
+ui-debug.log
