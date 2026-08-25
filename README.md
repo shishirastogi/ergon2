@@ -1,4 +1,5 @@
 # Ergon
+https://ergon.shishirexe.com/
 
 Freelance studio management app — track clients, projects, quotes and invoices, and see profitability at a glance. Ships as a responsive web app (Firebase Hosting) and an Android app (Capacitor).
 
